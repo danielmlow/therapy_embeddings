@@ -71,7 +71,7 @@ The model can now predict effectiveness for new therapy module sequences.
 
 ```
 Modules most similar to A: [('A', np.float32(1.0)), (np.str_('C'), np.float32(0.3570093)), (np.str_('E'), np.float32(0.19056007)), (np.str_('F'), np.float32(0.1291886)), (np.str_('P'), np.float32(0.10729633))]
-
+```
 
 
 
