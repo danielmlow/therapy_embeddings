@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
+from sklearn.manifold import TSNE
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 from collections import Counter
@@ -311,7 +312,51 @@ if __name__ == "__main__":
     plt.grid(True)
     
     plt.tight_layout()
-    plt.show()
+    plt.savefig('training_results.png', dpi=300, bbox_inches='tight')  # Save instead of show
+    plt.show(block=False)  # Don't pause
+    plt.pause(5)           
+
     
     print("\nModel training complete!")
     print("The model can now predict effectiveness for new therapy module sequences.")
+
+
+    # Extract the Embeddings
+    # After training your model
+    embedding_weights = model.embedding.weight.data.numpy()  # Shape: (17, embedding_dim)
+
+    # Get embedding for module 'A'
+    module_A_embedding = embedding_weights[module_to_idx['A']]  # Shape: (embedding_dim,)
+
+
+
+    # 1. 2D Plot with t-SNE/UMAP
+    # Reduce to 2D for plotting
+    # For 17 modules, use smaller perplexity
+    tsne = TSNE(n_components=2, perplexity=5, random_state=42)  # perplexity < 17
+    embeddings_2d = tsne.fit_transform(embedding_weights[1:])  # Skip padding token
+
+    # Plot
+    plt.figure(figsize=(10, 8))
+    for i, module in enumerate(sorted(all_modules)):
+        plt.scatter(embeddings_2d[i, 0], embeddings_2d[i, 1], s=100)
+        plt.annotate(module, (embeddings_2d[i, 0], embeddings_2d[i, 1]), 
+                    xytext=(5, 5), textcoords='offset points')
+    plt.title("Therapy Module Embeddings (t-SNE)")
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig('embeddings_2d.png', dpi=300, bbox_inches='tight')  # Save instead of show
+    plt.show(block=False)  # Don't pause
+    plt.pause(5)      
+
+    from sklearn.metrics.pairwise import cosine_similarity
+
+    # Find most similar modules to 'A'
+    similarities = cosine_similarity([embedding_weights[module_to_idx['A']]], 
+                                embedding_weights[1:])[0]
+
+    # Get top similar modules
+    similar_modules = sorted(zip(sorted(all_modules), similarities), 
+                            key=lambda x: x[1], reverse=True)
+    print("Modules most similar to A:", similar_modules[:5])
+    # The visualization will show you which therapy modules the model considers "similar" based on their usage patterns in your sequences
